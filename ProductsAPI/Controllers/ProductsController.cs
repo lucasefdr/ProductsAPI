@@ -30,6 +30,7 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [ActionName(nameof(GetProductByIdAsync))]
         public async Task<ActionResult<Product>> GetProductByIdAsync([FromRoute] int id)
         {
             var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
