@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProductsAPI.Context;
 using ProductsAPI.Models;
+using ProductsAPI.Services;
 
 namespace ProductsAPI.Controllers
 {
@@ -29,7 +30,7 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Product>> GetProductByIdAsync(int id)
+        public async Task<ActionResult<Product>> GetProductByIdAsync([FromRoute] int id)
         {
             var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
 
@@ -39,7 +40,7 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> PostProductAsync(Product product)
+        public async Task<ActionResult> PostProductAsync([FromBody] Product product)
         {
             if (product is null) return BadRequest();
 
@@ -50,7 +51,7 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> PutProductAsync(int id, Product product)
+        public async Task<ActionResult> PutProductAsync([FromRoute] int id, [FromBody] Product product)
         {
             if (id != product.ProductId) return BadRequest();
 
@@ -61,7 +62,7 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult> DeleteProductAsync(int id)
+        public async Task<ActionResult> DeleteProductAsync([FromRoute] int id)
         {
             var product = await _context.Products.FindAsync(id);
 
@@ -71,6 +72,12 @@ namespace ProductsAPI.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        [HttpGet("fromServices")]
+        public ActionResult<string> GetFromServices([FromQuery] string name, [FromServices] IFromService service)
+        {
+            return Ok(service.HelloWorld(name));
         }
     }
 }

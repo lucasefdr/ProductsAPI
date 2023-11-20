@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ProductsAPI.Context;
+using ProductsAPI.Services;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,9 @@ builder.Services.AddControllers().AddJsonOptions(opts =>
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Dependency injection
+builder.Services.AddTransient<IFromService, FromService>();
 
 // Add database services
 var connectionStringMySql = builder.Configuration.GetConnectionString("DefaultConnection");
