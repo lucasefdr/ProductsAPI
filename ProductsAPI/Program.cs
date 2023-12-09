@@ -1,5 +1,7 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using ProductsAPI.Context;
+using ProductsAPI.DTOs.Mappings;
 using ProductsAPI.Extensions;
 using ProductsAPI.Filters;
 using ProductsAPI.Logging;
@@ -10,18 +12,8 @@ using System.Text.Json.Serialization;
 // Configure the app's services (ConfigureServices method)
 var builder = WebApplication.CreateBuilder(args);
 
-#region Dependency Injection
-// Dependency injection
-builder.Services.AddTransient<IFromService, FromService>();
-
-// Add filters services
-builder.Services.AddScoped<ApiLoggingFilter>();
-
-// Add unit of work services
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-#endregion Dependency Injection
-
 #region Add Services
+
 // Add Controllers services and configure JSON serialization
 builder.Services.AddControllers().AddJsonOptions(opts =>
 {
@@ -38,7 +30,26 @@ var connectionStringMySql = builder.Configuration.GetConnectionString("DefaultCo
 
 builder.Services.AddDbContext<AppDbContext>
     (opts => opts.UseMySql(connectionStringMySql, ServerVersion.AutoDetect(connectionStringMySql)));
+
+// Add AutoMapper services
+var mappingConfig = new MapperConfiguration(mc => mc.AddProfile(new MappingProfile()));
+IMapper mapper = mappingConfig.CreateMapper();
 #endregion Add Services
+
+
+#region Dependency Injection
+// Dependency injection
+builder.Services.AddTransient<IFromService, FromService>();
+
+// Add filters services
+builder.Services.AddScoped<ApiLoggingFilter>();
+
+// Add unit of work services
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Add AutoMapper services
+builder.Services.AddSingleton(mapper);
+#endregion Dependency Injection
 
 var app = builder.Build();
 
