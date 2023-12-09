@@ -1,26 +1,31 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProductsAPI.Context;
+using ProductsAPI.Filters;
 using ProductsAPI.Models;
 using ProductsAPI.Services;
 
 namespace ProductsAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/products")]
     [ApiController]
     public class ProductsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ILogger _logger;
 
-        public ProductsController(AppDbContext context)
+        public ProductsController(AppDbContext context, ILogger<ProductsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpGet]
+        [ServiceFilter(typeof(ApiLoggingFilter))] // Add logging services - builder.Services.AddScoped<ApiLoggingFilter>();
         public async Task<ActionResult<IEnumerable<Product>>> GetProductsAsync()
         {
+            _logger.LogInformation("Getting products...");
+
             // async operation
             var products = await _context.Products.AsNoTracking().ToListAsync();
 

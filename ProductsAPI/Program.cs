@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using ProductsAPI.Context;
+using ProductsAPI.Extensions;
+using ProductsAPI.Filters;
+using ProductsAPI.Logging;
 using ProductsAPI.Services;
 using System.Text.Json.Serialization;
 
@@ -20,12 +23,27 @@ builder.Services.AddSwaggerGen();
 // Dependency injection
 builder.Services.AddTransient<IFromService, FromService>();
 
-// Add database services
+// Add filters services
+builder.Services.AddScoped<ApiLoggingFilter>();
+
+// Add database services - builder.Configuration => appsettings.json
 var connectionStringMySql = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>
     (opts => opts.UseMySql(connectionStringMySql, ServerVersion.AutoDetect(connectionStringMySql)));
 
 var app = builder.Build();
+
+// Configure logging services
+var loggerFactory = new LoggerFactory();
+loggerFactory.AddProvider(new CustomLoggerProvider(new CustomLoggerProviderConfiguration
+{
+    LogLevel = LogLevel.Information
+}));
+
+
+// Configure exception handler middleware
+app.ConfigureExceptionHandler();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
