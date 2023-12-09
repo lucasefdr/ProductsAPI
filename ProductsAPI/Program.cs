@@ -62,7 +62,7 @@ loggerFactory.AddProvider(new CustomLoggerProvider(new CustomLoggerProviderConfi
 
 
 // Configure exception handler middleware
-app.ConfigureExceptionHandler();
+//app.ConfigureExceptionHandler();
 
 
 // Configure the HTTP request pipeline.

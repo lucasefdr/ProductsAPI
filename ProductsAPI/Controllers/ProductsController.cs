@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using ProductsAPI.DTOs;
 using ProductsAPI.Models;
 using ProductsAPI.Repository;
 
@@ -10,20 +12,25 @@ public class ProductsController : ControllerBase
 {
     private readonly IUnitOfWork _uof;
     private readonly ILogger _logger;
+    private readonly IMapper _mapper;
 
-    public ProductsController(IUnitOfWork uof, ILogger<ProductsController> logger)
+    public ProductsController(IUnitOfWork uof, ILogger<ProductsController> logger, IMapper mapper)
     {
         _uof = uof;
         _logger = logger;
+        _mapper = mapper;
     }
 
     #region READ
     [HttpGet]
     //[ServiceFilter(typeof(ApiLoggingFilter))] // Add logging services - builder.Services.AddScoped<ApiLoggingFilter>();
-    public ActionResult<IEnumerable<Product>> GetProducts()
+    public ActionResult<IEnumerable<ProductDTO>> GetProducts()
     {
         //_logger.LogInformation("Getting products...");
-        return _uof.ProductRepository.Get().ToList();
+        var products = _uof.ProductRepository.Get()?.ToList();
+        var productsDTO = _mapper.Map<List<ProductDTO>>(products);
+
+        return productsDTO;
     }
 
     [HttpGet("{id:int}")]
@@ -34,34 +41,45 @@ public class ProductsController : ControllerBase
 
         if (product is null) return NotFound("Product not found.");
 
-        return Ok(product);
+        var productDTO = _mapper.Map<ProductDTO>(product);
+
+        return Ok(productDTO);
     }
 
     [HttpGet("orderByPrice")]
-    public ActionResult<IEnumerable<Product>> GetProductsOrderedByPrice()
+    public ActionResult<IEnumerable<ProductDTO>> GetProductsOrderedByPrice()
     {
-        return _uof.ProductRepository.GetProductsOrderedByPrice().ToList();
+        var products = _uof.ProductRepository.GetProductsOrderedByPrice()?.ToList();
+        var productsDTO = _mapper.Map<List<ProductDTO>>(products);
+
+        return productsDTO;
     }
     #endregion READ
 
     #region CREATE
     [HttpPost]
-    public ActionResult PostProduct([FromBody] Product product)
+    public ActionResult PostProduct([FromBody] ProductDTO productDTO)
     {
-        if (product is null) return BadRequest();
+        if (productDTO is null) return BadRequest();
+
+        var product = _mapper.Map<Product>(productDTO);
 
         _uof.ProductRepository.Add(product);
         _uof.Commit();
 
-        return CreatedAtAction(nameof(GetProductById), new { id = product.ProductId }, product);
+        var newProductDTO = _mapper.Map<ProductDTO>(product);
+
+        return CreatedAtAction(nameof(GetProductById), new { id = newProductDTO.ProductId }, newProductDTO);
     }
     #endregion CREATE
 
     #region UPDATE
     [HttpPut("{id:int}")]
-    public ActionResult PutProduct([FromRoute] int id, [FromBody] Product product)
+    public ActionResult PutProduct([FromRoute] int id, [FromBody] ProductDTO productDTO)
     {
-        if (id != product.ProductId) return BadRequest();
+        if (id != productDTO.ProductId) return BadRequest();
+
+        var product = _mapper.Map<Product>(productDTO);
 
         _uof.ProductRepository.Update(product);
         _uof.Commit();

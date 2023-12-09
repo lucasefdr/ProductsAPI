@@ -25,7 +25,7 @@ public class Repository<T> : IRepository<T> where T : class
         _context.Set<T>().Remove(entity);
     }
 
-    public IQueryable<T> Get()
+    public IQueryable<T>? Get()
     {
         // AsNoTracking() improves performance by telling EF Core not to track changes
         return _context.Set<T>().AsNoTracking();
