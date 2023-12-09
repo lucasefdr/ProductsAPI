@@ -1,89 +1,93 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProductsAPI.Context;
-using ProductsAPI.Filters;
 using ProductsAPI.Models;
-using ProductsAPI.Services;
+using ProductsAPI.Repository;
 
-namespace ProductsAPI.Controllers
+namespace ProductsAPI.Controllers;
+
+[Route("api/products")]
+[ApiController]
+public class ProductsController : ControllerBase
 {
-    [Route("api/products")]
-    [ApiController]
-    public class ProductsController : ControllerBase
+    private readonly IUnitOfWork _uof;
+    private readonly ILogger _logger;
+
+    public ProductsController(IUnitOfWork uof, ILogger<ProductsController> logger)
     {
-        private readonly AppDbContext _context;
-        private readonly ILogger _logger;
-
-        public ProductsController(AppDbContext context, ILogger<ProductsController> logger)
-        {
-            _context = context;
-            _logger = logger;
-        }
-
-        [HttpGet]
-        [ServiceFilter(typeof(ApiLoggingFilter))] // Add logging services - builder.Services.AddScoped<ApiLoggingFilter>();
-        public async Task<ActionResult<IEnumerable<Product>>> GetProductsAsync()
-        {
-            _logger.LogInformation("Getting products...");
-
-            // async operation
-            var products = await _context.Products.AsNoTracking().ToListAsync();
-
-            if (products is null) return NotFound("Products not found.");
-
-            return Ok(products);
-        }
-
-        [HttpGet("{id:int}")]
-        [ActionName(nameof(GetProductByIdAsync))]
-        public async Task<ActionResult<Product>> GetProductByIdAsync([FromRoute] int id)
-        {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
-
-            if (product is null) return NotFound("Product not found.");
-
-            return Ok(product);
-        }
-
-        [HttpPost]
-        public async Task<ActionResult> PostProductAsync([FromBody] Product product)
-        {
-            if (product is null) return BadRequest();
-
-            await _context.Products.AddAsync(product);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetProductByIdAsync), new { id = product.ProductId }, product);
-        }
-
-        [HttpPut("{id:int}")]
-        public async Task<ActionResult> PutProductAsync([FromRoute] int id, [FromBody] Product product)
-        {
-            if (id != product.ProductId) return BadRequest();
-
-            _context.Entry(product).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id:int}")]
-        public async Task<ActionResult> DeleteProductAsync([FromRoute] int id)
-        {
-            var product = await _context.Products.FindAsync(id);
-
-            if (product is null) return NotFound("Product not found.");
-
-            _context.Remove(product);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        [HttpGet("fromServices")]
-        public ActionResult<string> GetFromServices([FromQuery] string name, [FromServices] IFromService service)
-        {
-            return Ok(service.HelloWorld(name));
-        }
+        _uof = uof;
+        _logger = logger;
     }
+
+    #region READ
+    [HttpGet]
+    //[ServiceFilter(typeof(ApiLoggingFilter))] // Add logging services - builder.Services.AddScoped<ApiLoggingFilter>();
+    public ActionResult<IEnumerable<Product>> GetProducts()
+    {
+        //_logger.LogInformation("Getting products...");
+        return _uof.ProductRepository.Get().ToList();
+    }
+
+    [HttpGet("{id:int}")]
+    [ActionName(nameof(GetProductById))]
+    public ActionResult<Product> GetProductById([FromRoute] int id)
+    {
+        var product = _uof.ProductRepository.GetById(p => p.ProductId == id);
+
+        if (product is null) return NotFound("Product not found.");
+
+        return Ok(product);
+    }
+
+    [HttpGet("orderByPrice")]
+    public ActionResult<IEnumerable<Product>> GetProductsOrderedByPrice()
+    {
+        return _uof.ProductRepository.GetProductsOrderedByPrice().ToList();
+    }
+    #endregion READ
+
+    #region CREATE
+    [HttpPost]
+    public ActionResult PostProduct([FromBody] Product product)
+    {
+        if (product is null) return BadRequest();
+
+        _uof.ProductRepository.Add(product);
+        _uof.Commit();
+
+        return CreatedAtAction(nameof(GetProductById), new { id = product.ProductId }, product);
+    }
+    #endregion CREATE
+
+    #region UPDATE
+    [HttpPut("{id:int}")]
+    public ActionResult PutProduct([FromRoute] int id, [FromBody] Product product)
+    {
+        if (id != product.ProductId) return BadRequest();
+
+        _uof.ProductRepository.Update(product);
+        _uof.Commit();
+
+        return NoContent();
+    }
+    #endregion UPDATE
+
+    #region DELETE
+    [HttpDelete("{id:int}")]
+    public ActionResult DeleteProduct([FromRoute] int id)
+    {
+        var product = _uof.ProductRepository.GetById(p => p.ProductId == id);
+
+        if (product is null) return NotFound("Product not found.");
+
+        _uof.ProductRepository.Delete(product);
+        _uof.Commit();
+
+        return NoContent();
+    }
+    #endregion DELETE
+
+    /*[HttpGet("fromServices")]
+    public ActionResult<string> GetFromServices([FromQuery] string name, [FromServices] IFromService service)
+    {
+        return Ok(service.HelloWorld(name));
+    }*/
 }
