@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace ProductsAPI.Models;
+﻿namespace ProductsAPI.Models;
 
 // Class to return error details
 public class ErrorDetails
@@ -11,6 +9,6 @@ public class ErrorDetails
 
     public override string? ToString()
     {
-        return JsonConvert.SerializeObject(this);
+        return JsonContent.Create(this).ToString();
     }
 }

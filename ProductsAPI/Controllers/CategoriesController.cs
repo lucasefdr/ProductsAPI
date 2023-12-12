@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using ProductsAPI.Context;
 using ProductsAPI.DTOs;
 using ProductsAPI.Models;
+using ProductsAPI.Pagination;
 using ProductsAPI.Repository;
+using System.Text.Json;
 
 namespace ProductsAPI.Controllers;
 
@@ -23,9 +25,21 @@ public class CategoriesController : ControllerBase
 
     #region READ
     [HttpGet]
-    public ActionResult<IEnumerable<CategoryDTO>> GetCategories()
+    public ActionResult<IEnumerable<CategoryDTO>> GetCategories([FromQuery] PaginationParameters paginationParameters)
     {
-        var category = _uof.CategoryRepository.Get()?.ToList();
+        PagedList<Category> category = _uof.CategoryRepository.GetCategories(paginationParameters);
+
+        object metadada = new
+        {
+            category.TotalCount,
+            category.PageSize,
+            category.CurrentPage,
+            category.TotalPages,
+            category.HasNext,
+            category.HasPrevious
+        };
+
+        Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(metadada));
         var categoryDTO = _mapper.Map<List<CategoryDTO>>(category);
         return categoryDTO;
     }
@@ -45,9 +59,9 @@ public class CategoriesController : ControllerBase
     [HttpGet("products")]
     public ActionResult<IEnumerable<CategoryDTO>> GetCategoriesWithProducts()
     {
-        var category = _uof.CategoryRepository.GetCategoriesWithProducts().ToList();
-        var categoryDTO = _mapper.Map<List<CategoryDTO>>(category);
-        return categoryDTO;
+        var categories = _uof.CategoryRepository.GetCategoriesWithProducts();
+        var categoriesDTO = _mapper.Map<List<CategoryDTO>>(categories);
+        return categoriesDTO;
     }
 
     [HttpGet("orderByCategoryName")]

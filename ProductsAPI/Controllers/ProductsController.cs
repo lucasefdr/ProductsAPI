@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using ProductsAPI.DTOs;
 using ProductsAPI.Models;
+using ProductsAPI.Pagination;
 using ProductsAPI.Repository;
+using System.Text.Json;
 
 namespace ProductsAPI.Controllers;
 
@@ -24,10 +26,23 @@ public class ProductsController : ControllerBase
     #region READ
     [HttpGet]
     //[ServiceFilter(typeof(ApiLoggingFilter))] // Add logging services - builder.Services.AddScoped<ApiLoggingFilter>();
-    public ActionResult<IEnumerable<ProductDTO>> GetProducts()
+    public ActionResult<IEnumerable<ProductDTO>> GetProducts([FromQuery] PaginationParameters paginationParameters)
     {
         //_logger.LogInformation("Getting products...");
-        var products = _uof.ProductRepository.Get()?.ToList();
+        var products = _uof.ProductRepository.GetProducts(paginationParameters);
+
+        var metadada = new
+        {
+            products.TotalCount,
+            products.PageSize,
+            products.CurrentPage,
+            products.TotalPages,
+            products.HasNext,
+            products.HasPrevious
+        };
+
+        Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(metadada));
+
         var productsDTO = _mapper.Map<List<ProductDTO>>(products);
 
         return productsDTO;
@@ -35,7 +50,7 @@ public class ProductsController : ControllerBase
 
     [HttpGet("{id:int}")]
     [ActionName(nameof(GetProductById))]
-    public ActionResult<Product> GetProductById([FromRoute] int id)
+    public ActionResult<ProductDTO> GetProductById([FromRoute] int id)
     {
         var product = _uof.ProductRepository.GetById(p => p.ProductId == id);
 
