@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using ProductsAPI.Context;
 using ProductsAPI.DTOs.Mappings;
 using ProductsAPI.Extensions;
@@ -27,7 +28,36 @@ builder.Services.AddControllers().AddJsonOptions(opts =>
 
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ProductsAPI", Version = "v1" });
+
+    // Add JWT authentication
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme."
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 // Add database services - builder.Configuration => appsettings.json
 var connectionStringMySql = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -60,6 +90,18 @@ builder.Services.AddAuthentication(
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
     });
+
+// Add CORS services
+// builder.Services.AddCors();
+builder.Services.AddCors(opts =>
+{
+    opts.AddPolicy("AllowGET", builder =>
+    {
+        builder.AllowAnyOrigin()
+        .WithMethods("GET")
+        .AllowAnyHeader();
+    });
+});
 #endregion Add Services
 
 
@@ -88,6 +130,9 @@ loggerFactory.AddProvider(new CustomLoggerProvider(new CustomLoggerProviderConfi
     LogLevel = LogLevel.Information
 }));
 
+// Configure CORS services
+// app.UseCors(opts => opts.WithOrigins("https://www.apirequest.io/").AllowAnyMethod().AllowAnyHeader());
+app.UseCors();
 
 // Configure exception handler middleware
 //app.ConfigureExceptionHandler();

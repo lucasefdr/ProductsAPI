@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProductsAPI.Context;
@@ -14,6 +15,7 @@ namespace ProductsAPI.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 [Authorize(AuthenticationSchemes = "Bearer")] // Require authentication - Return 401 Unauthorized
+[EnableCors("AllowGET")]
 public class CategoriesController : ControllerBase
 {
     private readonly IUnitOfWork _uof;
