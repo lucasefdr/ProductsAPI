@@ -1,6 +1,8 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using ProductsAPI.Context;
 using ProductsAPI.DTOs.Mappings;
 using ProductsAPI.Extensions;
@@ -8,6 +10,7 @@ using ProductsAPI.Filters;
 using ProductsAPI.Logging;
 using ProductsAPI.Repository;
 using ProductsAPI.Services;
+using System.Text;
 using System.Text.Json.Serialization;
 
 // Configure the app's services (ConfigureServices method)
@@ -35,6 +38,28 @@ builder.Services.AddDbContext<EFContext>
 // Add AutoMapper services
 var mappingConfig = new MapperConfiguration(mc => mc.AddProfile(new MappingProfile()));
 IMapper mapper = mappingConfig.CreateMapper();
+
+// Add Identity services
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+                .AddEntityFrameworkStores<EFContext>()
+                .AddDefaultTokenProviders();
+
+// Add token JWT services
+// Adiciona o manipulador de autenticação e define o esquema de autenticação usado (Bearer)
+// Define como será validado o token recebido e as informações que devem ser validadas
+builder.Services.AddAuthentication(
+    JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opts =>
+    opts.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidAudience = builder.Configuration["TokenConfiguration:Audience"],
+        ValidIssuer = builder.Configuration["TokenConfiguration:Issuer"],
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    });
 #endregion Add Services
 
 
@@ -52,10 +77,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddSingleton(mapper);
 #endregion Dependency Injection
 
-// Add Identity services
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-                .AddEntityFrameworkStores<EFContext>()
-                .AddDefaultTokenProviders();
+
 
 var app = builder.Build();
 
