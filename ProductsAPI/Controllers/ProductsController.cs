@@ -26,10 +26,10 @@ public class ProductsController : ControllerBase
     #region READ
     [HttpGet]
     //[ServiceFilter(typeof(ApiLoggingFilter))] // Add logging services - builder.Services.AddScoped<ApiLoggingFilter>();
-    public ActionResult<IEnumerable<ProductDTO>> GetProducts([FromQuery] PaginationParameters paginationParameters)
+    public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProducts([FromQuery] PaginationParameters paginationParameters)
     {
         //_logger.LogInformation("Getting products...");
-        var products = _uof.ProductRepository.GetProducts(paginationParameters);
+        var products = await _uof.ProductRepository.GetProducts(paginationParameters);
 
         var metadada = new
         {
@@ -50,9 +50,9 @@ public class ProductsController : ControllerBase
 
     [HttpGet("{id:int}")]
     [ActionName(nameof(GetProductById))]
-    public ActionResult<ProductDTO> GetProductById([FromRoute] int id)
+    public async Task<ActionResult<ProductDTO>> GetProductById([FromRoute] int id)
     {
-        var product = _uof.ProductRepository.GetById(p => p.ProductId == id);
+        var product = await _uof.ProductRepository.GetById(p => p.ProductId == id);
 
         if (product is null) return NotFound("Product not found.");
 
@@ -62,9 +62,9 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet("orderByPrice")]
-    public ActionResult<IEnumerable<ProductDTO>> GetProductsOrderedByPrice()
+    public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProductsOrderedByPrice()
     {
-        var products = _uof.ProductRepository.GetProductsOrderedByPrice()?.ToList();
+        var products = await _uof.ProductRepository.GetProductsOrderedByPrice();
         var productsDTO = _mapper.Map<List<ProductDTO>>(products);
 
         return productsDTO;
@@ -73,14 +73,14 @@ public class ProductsController : ControllerBase
 
     #region CREATE
     [HttpPost]
-    public ActionResult PostProduct([FromBody] ProductDTO productDTO)
+    public async Task<ActionResult> PostProduct([FromBody] ProductDTO productDTO)
     {
         if (productDTO is null) return BadRequest();
 
         var product = _mapper.Map<Product>(productDTO);
 
         _uof.ProductRepository.Add(product);
-        _uof.Commit();
+        await _uof.Commit();
 
         var newProductDTO = _mapper.Map<ProductDTO>(product);
 
@@ -90,14 +90,14 @@ public class ProductsController : ControllerBase
 
     #region UPDATE
     [HttpPut("{id:int}")]
-    public ActionResult PutProduct([FromRoute] int id, [FromBody] ProductDTO productDTO)
+    public async Task<ActionResult> PutProduct([FromRoute] int id, [FromBody] ProductDTO productDTO)
     {
         if (id != productDTO.ProductId) return BadRequest();
 
         var product = _mapper.Map<Product>(productDTO);
 
         _uof.ProductRepository.Update(product);
-        _uof.Commit();
+        await _uof.Commit();
 
         return NoContent();
     }
@@ -105,14 +105,14 @@ public class ProductsController : ControllerBase
 
     #region DELETE
     [HttpDelete("{id:int}")]
-    public ActionResult DeleteProduct([FromRoute] int id)
+    public async Task<ActionResult> DeleteProduct([FromRoute] int id)
     {
-        var product = _uof.ProductRepository.GetById(p => p.ProductId == id);
+        var product = await _uof.ProductRepository.GetById(p => p.ProductId == id);
 
         if (product is null) return NotFound("Product not found.");
 
         _uof.ProductRepository.Delete(product);
-        _uof.Commit();
+        await _uof.Commit();
 
         return NoContent();
     }

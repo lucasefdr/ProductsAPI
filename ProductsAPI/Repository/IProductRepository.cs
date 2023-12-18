@@ -5,7 +5,7 @@ namespace ProductsAPI.Repository;
 
 public interface IProductRepository : IRepository<Product>
 {
-    IEnumerable<Product>? GetProductsOrderedByPrice();
+    Task<IEnumerable<Product>> GetProductsOrderedByPrice();
     //IEnumerable<Product>? GetProducts(ProductsParameters paginationParamenters);
-    PagedList<Product>? GetProducts(PaginationParameters paginationParamenters);
+    Task<PagedList<Product>> GetProducts(PaginationParameters paginationParamenters);
 }

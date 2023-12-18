@@ -7,25 +7,25 @@ namespace ProductsAPI.Repository;
 
 public class CategoryRepository : Repository<Category>, ICategoryRepository
 {
-    public CategoryRepository(AppDbContext context) : base(context)
+    public CategoryRepository(EFContext context) : base(context)
     {
 
     }
 
-    public PagedList<Category> GetCategories(PaginationParameters paginationParameters)
+    public Task<PagedList<Category>> GetCategories(PaginationParameters paginationParameters)
     {
         return PagedList<Category>.ToPagedList(Get().OrderBy(c => c.CategoryId),
                                                                 paginationParameters.PageNumber,
                                                                 paginationParameters.PageSize);
     }
 
-    public IEnumerable<Category> GetCategoriesOrderedByName()
+    public async Task<IEnumerable<Category>> GetCategoriesOrderedByName()
     {
-        return Get().OrderBy(c => c.Name).ToList();
+        return await Get().OrderBy(c => c.Name).ToListAsync();
     }
 
-    public IEnumerable<Category> GetCategoriesWithProducts()
+    public async Task<IEnumerable<Category>> GetCategoriesWithProducts()
     {
-        return Get().Include(c => c.Products).ToList();
+        return await Get().Include(c => c.Products).ToListAsync();
     }
 }

@@ -5,7 +5,7 @@ namespace ProductsAPI.Repository;
 
 public interface ICategoryRepository : IRepository<Category>
 {
-    IEnumerable<Category> GetCategoriesOrderedByName();
-    IEnumerable<Category> GetCategoriesWithProducts();
-    PagedList<Category> GetCategories(PaginationParameters paginationParameters);
+    Task<IEnumerable<Category>> GetCategoriesOrderedByName();
+    Task<IEnumerable<Category>> GetCategoriesWithProducts();
+    Task<PagedList<Category>> GetCategories(PaginationParameters paginationParameters);
 }

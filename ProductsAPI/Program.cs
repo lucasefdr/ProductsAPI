@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ProductsAPI.Context;
 using ProductsAPI.DTOs.Mappings;
@@ -28,7 +29,7 @@ builder.Services.AddSwaggerGen();
 // Add database services - builder.Configuration => appsettings.json
 var connectionStringMySql = builder.Configuration.GetConnectionString("DefaultConnection");
 
-builder.Services.AddDbContext<AppDbContext>
+builder.Services.AddDbContext<EFContext>
     (opts => opts.UseMySql(connectionStringMySql, ServerVersion.AutoDetect(connectionStringMySql)));
 
 // Add AutoMapper services
@@ -50,6 +51,11 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Add AutoMapper services
 builder.Services.AddSingleton(mapper);
 #endregion Dependency Injection
+
+// Add Identity services
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+                .AddEntityFrameworkStores<EFContext>()
+                .AddDefaultTokenProviders();
 
 var app = builder.Build();
 
@@ -74,6 +80,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseRouting();
+
+// Middleware for authentication
+app.UseAuthentication();
+
+// Middleware for authorization
 app.UseAuthorization();
 
 app.MapControllers();

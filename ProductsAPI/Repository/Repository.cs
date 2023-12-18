@@ -7,9 +7,9 @@ namespace ProductsAPI.Repository;
 public class Repository<T> : IRepository<T> where T : class
 {
     // Create a constructor that accepts an instance of AppDbContext
-    protected AppDbContext _context;
+    protected EFContext _context;
 
-    public Repository(AppDbContext context)
+    public Repository(EFContext context)
     {
         _context = context;
     }
@@ -25,15 +25,15 @@ public class Repository<T> : IRepository<T> where T : class
         _context.Set<T>().Remove(entity);
     }
 
-    public IQueryable<T>? Get()
+    public IQueryable<T> Get()
     {
         // AsNoTracking() improves performance by telling EF Core not to track changes
         return _context.Set<T>().AsNoTracking();
     }
 
-    public T? GetById(Expression<Func<T, bool>> predicate)
+    public async Task<T?> GetById(Expression<Func<T, bool>> predicate)
     {
-        return _context.Set<T>().SingleOrDefault(predicate);
+        return await _context.Set<T>().SingleOrDefaultAsync(predicate);
     }
 
     public void Update(T entity)

@@ -4,11 +4,11 @@ namespace ProductsAPI.Repository;
 
 public class UnitOfWork : IUnitOfWork
 {
-    private readonly IProductRepository? _productRepository;
-    private readonly ICategoryRepository? _categoryRepository;
-    private readonly AppDbContext _context;
+    private readonly IProductRepository _productRepository;
+    private readonly ICategoryRepository _categoryRepository;
+    private readonly EFContext _context;
 
-    public UnitOfWork(AppDbContext context)
+    public UnitOfWork(EFContext context)
     {
         _context = context;
     }
@@ -18,7 +18,7 @@ public class UnitOfWork : IUnitOfWork
     public ICategoryRepository CategoryRepository => _categoryRepository ?? new CategoryRepository(_context);
 
     // Save pending changes to the data store
-    public void Commit() => _context.SaveChanges();
+    public async Task Commit() => await _context.SaveChangesAsync();
 
     public void Dispose() => _context.Dispose();
 }

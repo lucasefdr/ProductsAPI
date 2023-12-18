@@ -10,7 +10,7 @@ using ProductsAPI.Context;
 
 namespace ProductsAPI.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
+    [DbContext(typeof(EFContext))]
     [Migration("20231115115610_AddCategories")]
     partial class AddCategories
     {

@@ -25,9 +25,9 @@ public class CategoriesController : ControllerBase
 
     #region READ
     [HttpGet]
-    public ActionResult<IEnumerable<CategoryDTO>> GetCategories([FromQuery] PaginationParameters paginationParameters)
+    public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategories([FromQuery] PaginationParameters paginationParameters)
     {
-        PagedList<Category> category = _uof.CategoryRepository.GetCategories(paginationParameters);
+        PagedList<Category> category = await _uof.CategoryRepository.GetCategories(paginationParameters);
 
         object metadada = new
         {
@@ -45,9 +45,9 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public ActionResult<CategoryDTO> GetCategoryById(int id)
+    public async Task<ActionResult<CategoryDTO>> GetCategoryById(int id)
     {
-        var category = _uof.CategoryRepository.GetById(c => c.CategoryId == id);
+        var category = await _uof.CategoryRepository.GetById(c => c.CategoryId == id);
 
         if (category == null) return NotFound();
 
@@ -57,17 +57,17 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet("products")]
-    public ActionResult<IEnumerable<CategoryDTO>> GetCategoriesWithProducts()
+    public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategoriesWithProducts()
     {
-        var categories = _uof.CategoryRepository.GetCategoriesWithProducts();
+        var categories = await _uof.CategoryRepository.GetCategoriesWithProducts();
         var categoriesDTO = _mapper.Map<List<CategoryDTO>>(categories);
         return categoriesDTO;
     }
 
     [HttpGet("orderByCategoryName")]
-    public ActionResult<IEnumerable<CategoryDTO>> GetCategoriesByCategoryName()
+    public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategoriesByCategoryName()
     {
-        var category = _uof.CategoryRepository.GetCategoriesOrderedByName().ToList();
+        var category = await _uof.CategoryRepository.GetCategoriesOrderedByName();
         var categoryDTO = _mapper.Map<List<CategoryDTO>>(category);
         return categoryDTO;
     }
@@ -75,14 +75,14 @@ public class CategoriesController : ControllerBase
 
     #region CREATE
     [HttpPost]
-    public ActionResult PostCategory(CategoryDTO categoryDTO)
+    public async Task<ActionResult> PostCategory(CategoryDTO categoryDTO)
     {
         if (categoryDTO == null) return BadRequest();
 
         var category = _mapper.Map<Category>(categoryDTO);
 
         _uof.CategoryRepository.Add(category);
-        _uof.Commit();
+        await _uof.Commit();
 
         var newCategoryDTO = _mapper.Map<CategoryDTO>(category);
 
@@ -92,14 +92,14 @@ public class CategoriesController : ControllerBase
 
     #region UPDATE
     [HttpPut("{id:int}")]
-    public ActionResult PutCategory(CategoryDTO categoryDTO, int id)
+    public async Task<ActionResult> PutCategory(CategoryDTO categoryDTO, int id)
     {
         if (categoryDTO.CategoryId != id) return BadRequest();
 
         var category = _mapper.Map<Category>(categoryDTO);
 
         _uof.CategoryRepository.Update(category);
-        _uof.Commit();
+        await _uof.Commit();
 
         return NoContent();
     }
@@ -107,14 +107,14 @@ public class CategoriesController : ControllerBase
 
     #region DELETE
     [HttpDelete("{id:int}")]
-    public ActionResult DeleteCategory(int id)
+    public async Task<ActionResult> DeleteCategory(int id)
     {
-        var category = _uof.CategoryRepository.GetById(c => c.CategoryId == id);
+        var category = await _uof.CategoryRepository.GetById(c => c.CategoryId == id);
 
         if (category == null) return NotFound();
 
         _uof.CategoryRepository.Delete(category);
-        _uof.Commit();
+        await _uof.Commit();
 
         return NoContent();
     }
