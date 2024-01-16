@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -102,6 +103,27 @@ builder.Services.AddCors(opts =>
         .AllowAnyHeader();
     });
 });
+
+// Add API versioning services
+builder.Services
+    .AddApiVersioning(opts =>
+{
+    opts.AssumeDefaultVersionWhenUnspecified = true;
+    opts.DefaultApiVersion = new Asp.Versioning.ApiVersion(1, 0);
+    opts.ReportApiVersions = true;
+    opts.ApiVersionReader = ApiVersionReader.Combine(
+        new QueryStringApiVersionReader("api-version"),
+        new HeaderApiVersionReader("x-api-version"),
+        new MediaTypeApiVersionReader("ver"));
+})
+    .AddApiExplorer(opts =>
+{
+
+    opts.GroupNameFormat = "'v'VVV";
+    opts.SubstituteApiVersionInUrl = true;
+});
+
+
 #endregion Add Services
 
 
@@ -142,7 +164,18 @@ app.UseCors();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        var descriptions = app.DescribeApiVersions();
+
+        // Build a swagger endpoint for each discovered API version
+        foreach (var description in descriptions)
+        {
+            var url = $"/swagger/{description.GroupName}/swagger.json";
+            var name = description.GroupName.ToUpperInvariant();
+            options.SwaggerEndpoint(url, name);
+        }
+    });
 }
 
 app.UseHttpsRedirection();
